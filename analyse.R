@@ -220,31 +220,31 @@ summary(results)
 long.df = merge(df %>% dplyr::filter(session == 0)%>%dplyr::select(eid,ALA,EstimatedTotalIntraCranialVol,Treatment_OFAMS),long, id.vars = "eid")
 # check associations of ALA with THE ANNUAL RATE OF CHANGE in ...
 ## EDSS
-m=lm(EDSS_diff~ALA,data=long.df)
+m=lm(EDSS_diff~log(ALA),data=long.df)
 summary(m)
-m=lm(EDSS_diff ~ALA+age + sex + Treatment_OFAMS,data=long.df)
+m=lm(EDSS_diff ~log(ALA)+age + sex + Treatment_OFAMS,data=long.df)
 summary(m)
 
 ## PASAT
-m=lm(PASAT_diff~ALA,data=long.df)
+m=lm(PASAT_diff~log(ALA),data=long.df)
 summary(m)
-m=lm(PASAT_diff ~ALA+age + sex + Treatment_OFAMS,data=long.df)
+m=lm(PASAT_diff ~log(ALA)+age + sex + Treatment_OFAMS,data=long.df)
 summary(m)
 
 ## T2w lesions
-m=lm(lesion_count_diff~ALA,data=long.df)
+m=lm(lesion_count_diff~log(ALA),data=long.df)
 summary(m)
-m=lm(lesion_count_diff ~ALA+age + sex + Treatment_OFAMS+EstimatedTotalIntraCranialVol,data=long.df)
+m=lm(lesion_count_diff ~log(ALA)+age + sex + Treatment_OFAMS+EstimatedTotalIntraCranialVol,data=long.df)
 summary(m)
 
 ## Brain volume
-m=lm(TotalVol_diff~ALA,data=long.df)
+m=lm(TotalVol_diff~log(ALA),data=long.df)
 summary(m)
-m=lm(TotalVol_diff ~ALA+age + sex + Treatment_OFAMS+EstimatedTotalIntraCranialVol,data=long.df)
+m=lm(TotalVol_diff ~log(ALA)+age + sex + Treatment_OFAMS+EstimatedTotalIntraCranialVol,data=long.df)
 summary(m)
 
 ## [[total]] T1w lesions
-m=lm(T1wLesions~ALA,data=long.df)
+m=lm(T1wLesions~log(ALA),data=long.df)
 summary(m)
-m=lm(T1wLesions ~ALA+age + sex + Treatment_OFAMS+EstimatedTotalIntraCranialVol,data=long.df)
+m=lm(T1wLesions ~log(ALA)+age + sex + Treatment_OFAMS+EstimatedTotalIntraCranialVol,data=long.df)
 summary(m)
