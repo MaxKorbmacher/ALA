@@ -109,6 +109,11 @@ df = df %>%
          EDSS_diff = c(diff(EDSS)/12, NA))
 df_copy=df
 df = df %>% filter(session == 1) %>% select(eid, sex, age, ends_with("_diff"))
-df = merge(df,df_copy %>% filter(session == 145) %>% select(eid,T1wLesions),by="eid")
+df = merge(df,df_copy %>% filter(session == 145) %>% select(eid,T1wLesions),by="eid",all=T)
 
+# add total nb relapses at 12-year follow-up
+demo10$eid = demo10$Patnr
+demo10$relapse_rate = demo10$Nb_of_relapses_FU/12
+demo10$relapse_rate_prior = (demo10$Nb_of_relapses_FU + demo10$relapses_12mnths_before_baseline)/12
+df = merge(df,demo10%>%select(eid,relapse_rate,relapses_12mnths_before_baseline,relapse_rate_prior),all=T)
 write.csv(x = df, file = paste(savepath, "rate_of_change_10yrs.csv",sep = ""))

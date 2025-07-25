@@ -3,6 +3,9 @@
 #
 # Max Korbmacher, 21 Jul 2025
 #
+# clean up
+rm(list = ls(all.names = TRUE)) # clear all objects includes hidden objects.
+gc() #free up memory and report the memory usage.
 #
 print("Load packages")
 pacman::p_load(haven,dplyr,reshape2)
@@ -15,7 +18,7 @@ df = read.csv("/Users/max/Documents/Local/MS/data/final_dat_subc.csv")
 demo = read_spss("/Users/max/Documents/Local/MS/demographics/Jurate-statistikkfiler/Demographics.sav") # Demographics
 ALA = read_sas("/Users/max/Documents/Local/MS/demographics/Statistikk-filer/fa.sas7bdat")
 relapse = read_sas("/Users/max/Documents/Local/MS/demographics/Statistikk-filer/relapsereport.sas7bdat") # relapse info
-
+demo10 = read.csv('/Users/max/Documents/Local/MS/data/OFAMS88_OFAMS10_lifestylepaper_ updated_beskyttet.csv',sep = ";") # 10 years follow up demo & clin scores
 #
 print("prep and select")
 df$TotalVol = df$TotalGrayVol + df$CerebralWhiteMatterVol + df$Right.Cerebellum.White.Matter + df$Left.Cerebellum.White.Matter
@@ -47,11 +50,26 @@ ALA = ALA %>% select(patno, visitno, FA18X3N3)
 names(ALA) = c("eid","session","ALA")
 
 # T2_lesions = read.csv("/Users/max/Documents/Local/MS/data/lesion_count.csv")
-relapse = na.omit(relapse)
-relapse %>% select(patno, relapseno)
-print("NOTE!")
-print("Only N=6 participants presented a relapse.")
-print("Hence, this variable is not very useful")
+#
+# Relapses
+#relapsenb = relapse %>% filter(RELAPSENEW==1) %>% select(patno, relapseno) %>% group_by(patno) %>% summarise(max_relapseno = max(relapseno))
+relapse$eid = relapse$patno
+demo10$eid = demo10$Patnr
+relapse = merge(relapse,demo10,by="eid",all=T)
+# Convert to Date objects, specifying format for BL_DATEOFVISIT
+DATEOFONSET_dt <- as.Date(relapse$DATEOFONSET)
+BL_DATEOFVISIT_dt <- as.Date(relapse$BL_DATEOFVISIT, format="%m/%d/%Y")
+# Calculate the difference in days
+relapse$time_difference_days_r <- as.numeric(DATEOFONSET_dt - BL_DATEOFVISIT_dt, units = "days")
+# Calculate the difference in years
+relapse$time_difference_years_r <- as.numeric(DATEOFONSET_dt - BL_DATEOFVISIT_dt, units = "days")/365
+
+relapse$session = ifelse(relapse$time_difference_years_r<1,1,0)+
+  ifelse(relapse$time_difference_years_r>1 & relapse$time_difference_years_r<2,13,0)+
+  ifelse(relapse$time_difference_years_r>2,25,0)-1
+relapse$session = factor(relapse$session)
+relapse$RELAPSENEW = ifelse(is.na(relapse$RELAPSENEW) == T, 0,relapse$RELAPSENEW)
+relapse = relapse %>% select(eid, session, RELAPSENEW)
 
 # EDSS
 edss = read_spss("/Users/max/Documents/Local/MS/demographics/Jurate-statistikkfiler/edss.sav")
@@ -76,19 +94,22 @@ levels(edss$session) = c(0,6,12,18,24)
 # ---------------------- #
 #
 # Merge PASAT and brain vol
-df = merge(PASAT,df,by=c("eid","session"))
+df = merge(PASAT,df,by=c("eid","session"),all=T)
 # Further merge with EDSS
-df = merge(edss,df,by=c("eid","session"))
+df = merge(edss,df,by=c("eid","session"),all=T)
 # further merge with ALA
-df = merge(ALA,df,by=c("eid","session"))
+df = merge(ALA,df,by=c("eid","session"),all=T)
 # further merge with new T1Gd lesions factor
-df = merge(T1Gd,df,by=c("eid","session"))
-
+df = merge(T1Gd,df,by=c("eid","session"),all=T)
 # here is what the filtered version looks like
 df %>% filter(session == 0 |session == 12 |session == 24)
+
+# further merge with new relapse
+rel = merge(relapse,df,by=c("eid","session"),all=T)
 
 # ---------------------- #
 # SAVE DATA
 # ---------------------- #
 
 write.csv(df,file="/Users/max/Documents/Local/MS/ALA/data/clean.csv")
+write.csv(rel,file="/Users/max/Documents/Local/MS/ALA/data/relapses_long.csv")

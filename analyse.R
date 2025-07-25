@@ -24,6 +24,10 @@
 # ------------------------------------------------------------ #
 #
 # 0. Preparations --------------------------------------------
+# clean up
+rm(list = ls(all.names = TRUE)) # clear all objects includes hidden objects.
+gc() #free up memory and report the memory usage.
+
 # define data path
 datapath = "/Users/max/Documents/Local/MS/ALA/data/"
 
@@ -32,6 +36,7 @@ pacman::p_load(haven,dplyr,reshape2,lme4,lmerTest,VGAM,mediation, psych, MuMIn, 
 # load data
 df = read.csv(paste(datapath,"clean.csv",sep=""))
 long = read.csv(paste(datapath,"rate_of_change_10yrs.csv",sep=""))
+relapse = read.csv(paste(datapath,"relapses_long.csv",sep=""))
 #
 # 1. Descriptives & Validation -------------------------------
 ICC(reshape(df%>%dplyr::select(eid,session,ALA), 
@@ -100,6 +105,16 @@ m = glmer(new_T1Gd_lesion ~ log(ALA) +age + sex + Treatment_OFAMS + (1|eid),df,f
 summary(m)
 # control also for intracranial volume
 m = glmer(new_T1Gd_lesion ~ log(ALA) +age + sex + Treatment_OFAMS + EstimatedTotalIntraCranialVol + (1|eid),df,family = binomial(link = cloglog))
+summary(m)
+
+# 2.2.2 New relapse (Negative binomial models) ---------------------
+relapse = merge(relapse%>%dplyr::select(eid,session,RELAPSENEW),
+      df%>%dplyr::select(eid,session,ALA,sex,age,Treatment_OFAMS),
+      by=c("eid","session"))
+relapse$RELAPSENEW = ifelse(is.na(relapse$RELAPSENEW) == T, 0,relapse$RELAPSENEW)
+m = glmer(RELAPSENEW ~ log(ALA) + (1|eid),relapse,family = binomial(link = cloglog))
+summary(m)
+m = glmer(RELAPSENEW ~ log(ALA) +age + sex +Treatment_OFAMS+ (1|eid),relapse,family = binomial(link = cloglog))
 summary(m)
 
 # 3. Simple linear models ------------------------------------ 
@@ -224,6 +239,7 @@ m=lm(EDSS_diff~log(ALA),data=long.df)
 summary(m)
 m=lm(EDSS_diff ~log(ALA)+age + sex + Treatment_OFAMS,data=long.df)
 summary(m)
+effectsize::standardize_parameters(m)
 
 ## PASAT
 m=lm(PASAT_diff~log(ALA),data=long.df)
@@ -248,3 +264,31 @@ m=lm(T1wLesions~log(ALA),data=long.df)
 summary(m)
 m=lm(T1wLesions ~log(ALA)+age + sex + Treatment_OFAMS+EstimatedTotalIntraCranialVol,data=long.df)
 summary(m)
+
+## relapse rate / annual relapses during 12 study years
+m=lm(relapse_rate~log(ALA),data=long.df)
+summary(m)
+effectsize::standardize_parameters(m)
+m=lm(relapse_rate ~log(ALA)+age + sex + Treatment_OFAMS,data=long.df)
+summary(m)
+effectsize::standardize_parameters(m)
+
+## non-log transformed
+m=lm(relapse_rate~(ALA),data=long.df)
+summary(m)
+m=lm(relapse_rate ~(ALA)+age + sex + Treatment_OFAMS,data=long.df)
+summary(m)
+
+## relapse rate / annual relapses during 12 study years + the year before
+m=lm(relapse_rate_prior~log(ALA),data=long.df)
+summary(m)
+m=lm(relapse_rate_prior ~log(ALA)+age + sex + Treatment_OFAMS,data=long.df)
+summary(m)
+effectsize::standardize_parameters(m)
+
+## relapses prior baseline
+m=lm(relapses_12mnths_before_baseline~log(ALA),data=long.df)
+summary(m)
+m=lm(relapses_12mnths_before_baseline ~log(ALA)+age + sex + Treatment_OFAMS,data=long.df)
+summary(m)
+
