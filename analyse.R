@@ -121,7 +121,7 @@ summary(m)
 
 # 3.1 T2w number of lesions  -----------------------------------------
 # including ICV
-m = lm(lesion_count ~ log(ALA) + age + sex + Treatment_OFAMS + EstimatedTotalIntraCranialVol,df%>%filter(session==0))
+m = lm(lesion_count ~ log(ALA) + age + sex + EstimatedTotalIntraCranialVol,df%>%filter(session==0))
 summary(m)
 effectsize::standardize_parameters(m)
 m = lm(lesion_count ~ log(ALA) + age + sex + Treatment_OFAMS + EstimatedTotalIntraCranialVol,df%>%filter(session==12))
@@ -129,7 +129,7 @@ summary(m)
 m = lm(lesion_count ~ log(ALA) + age + sex + Treatment_OFAMS + EstimatedTotalIntraCranialVol,df%>%filter(session==24))
 summary(m)
 # not including ICV
-m = lm(lesion_count ~ log(ALA) + age + sex + Treatment_OFAMS ,df%>%filter(session==0))
+m = lm(lesion_count ~ log(ALA) + age + sex ,df%>%filter(session==0))
 summary(m)
 m = lm(lesion_count ~ log(ALA) + age + sex + Treatment_OFAMS,df%>%filter(session==12))
 summary(m)
@@ -138,14 +138,14 @@ summary(m)
 
 # 3.2 Brain volume  -----------------------------------------
 # including ICV
-m = lm(TotalVol ~ log(ALA) + age + sex + Treatment_OFAMS + EstimatedTotalIntraCranialVol,df%>%filter(session==0))
+m = lm(TotalVol ~ log(ALA) + age + sex + EstimatedTotalIntraCranialVol,df%>%filter(session==0))
 summary(m)
 m = lm(TotalVol ~ log(ALA) + age + sex + Treatment_OFAMS + EstimatedTotalIntraCranialVol,df%>%filter(session==12))
 summary(m)
 m = lm(TotalVol ~ log(ALA) + age + sex + Treatment_OFAMS + EstimatedTotalIntraCranialVol,df%>%filter(session==24))
 summary(m)
 # not including ICV
-m = lm(TotalVol ~ log(ALA) + age + sex + Treatment_OFAMS ,df%>%filter(session==0))
+m = lm(TotalVol ~ log(ALA) + age + sex ,df%>%filter(session==0))
 summary(m)
 m = lm(TotalVol ~ log(ALA) + age + sex + Treatment_OFAMS,df%>%filter(session==12))
 summary(m)
@@ -156,7 +156,7 @@ summary(m)
 # 3.3 PASAT  -----------------------------------------
 m = lm(PASAT ~ log(ALA),df%>%filter(session==0))
 summary(m)
-m = lm(PASAT ~ log(ALA) + age + sex + Treatment_OFAMS,df%>%filter(session==0))
+m = lm(PASAT ~ log(ALA) + age + sex,df%>%filter(session==0))
 summary(m)
 m = lm(PASAT ~ log(ALA),df%>%filter(session==12))
 summary(m)
@@ -170,7 +170,7 @@ summary(m)
 # 3.4 EDSS  -----------------------------------------
 m = lm(edss ~ log(ALA),df%>%filter(session==0))
 summary(m)
-m = lm(edss ~ log(ALA) + age + sex + Treatment_OFAMS,df%>%filter(session==0))
+m = lm(edss ~ log(ALA) + age + sex,df%>%filter(session==0))
 summary(m)
 m = lm(edss ~ log(ALA),df%>%filter(session==12))
 summary(m)
