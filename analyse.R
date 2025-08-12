@@ -33,7 +33,7 @@ gc() #free up memory and report the memory usage.
 datapath = "/Users/max/Documents/Local/MS/ALA/data/"
 
 # read packages
-pacman::p_load(haven,dplyr,reshape2,lme4,lmerTest,VGAM,mediation, psych, MuMIn, reshape2)
+pacman::p_load(haven,dplyr,reshape2,lme4,lmerTest,VGAM,mediation, psych, MuMIn, reshape2, tidyr)
 # load data
 df = read.csv(paste(datapath,"clean.csv",sep=""))
 long = read.csv(paste(datapath,"rate_of_change_10yrs.csv",sep=""))
@@ -43,6 +43,110 @@ relapse = read.csv(paste(datapath,"relapses_long.csv",sep=""))
 ICC(reshape(df%>%dplyr::select(eid,session,ALA), 
             idvar = "eid", timevar = "session", 
             direction = "wide") %>% dplyr::select(-eid))
+# Descriptive table
+relapse %>%
+  group_by(session) %>%
+  summarise(
+    across(
+      c(RELAPSENEW, DiseaseDuration),
+      list(
+        mean = ~mean(., na.rm = TRUE),
+        sd   = ~sd(., na.rm = TRUE),
+        N    = ~sum(!is.na(.))
+      )
+    )
+  ) %>%
+  pivot_longer(
+    cols = -session,
+    names_to = c("variable", "stat"),
+    names_sep = "_"
+  ) %>%
+  pivot_wider(
+    names_from = session,
+    values_from = value
+  )
+Table1 = df %>%
+  group_by(session) %>%
+  summarise(
+    across(
+      c(age, ALA, new_T1Gd_lesion, TotalVol, lesion_count, edss, PASAT),
+      list(
+        mean = ~mean(., na.rm = TRUE),
+        sd   = ~sd(., na.rm = TRUE),
+        N    = ~sum(!is.na(.))
+      )
+    ),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols = -session,
+    names_to = c("variable", "stat"),
+    names_pattern = "^(.*)_(mean|sd|N)$"
+  ) %>%
+  pivot_wider(
+    names_from = session,
+    values_from = value
+  )
+print(Table1, n=100)
+range((df %>% filter(session==0))$ALA,na.rm = T)
+summarise_categorical <- function(data, vars) {
+  data %>%
+    pivot_longer(
+      cols = {{ vars }},
+      names_to = "variable",
+      values_to = "category"
+    ) %>%
+    group_by(session, variable, category) %>%
+    summarise(N = n(), .groups = "drop_last") %>%
+    mutate(Percent = N / sum(N) * 100) %>%
+    ungroup() %>%
+    pivot_wider(
+      names_from = session,
+      values_from = c(N, Percent),
+      names_glue = "{.value}_session{session}"
+    )
+}
+# Categorical summary
+summarise_categorical(
+  df,
+  c(sex)
+)
+
+# last time point summary
+continuous_vars <- c(
+  "Age_OFAMS10", "T1wLesions", "relapse_rate", "relapses_12mnths_before_baseline",
+  "relapse_rate_prior", "Nb_of_relapses_FU", "EDSS_10_short", "TotalVol",
+  "PASAT", "t2wLesions", "EDSS", "lesion_count_diff"
+)
+
+
+long %>%
+  summarise(
+    across(
+      all_of(continuous_vars),
+      list(
+        mean = ~mean(., na.rm = TRUE),
+        sd   = ~sd(., na.rm = TRUE),
+        N    = ~sum(!is.na(.))
+      )
+    )
+  ) %>%
+  pivot_longer(
+    everything(),
+    names_to = c("variable", "stat"),
+    names_pattern = "^(.*)_(mean|sd|N)$"
+  ) %>%
+  pivot_wider(
+    names_from = stat,
+    values_from = value
+  )
+sum(na.omit(long$Nb_of_relapses_FU))
+sum(na.omit(long$T1wLesions))
+
+dd = ((merge(long, df%>%filter(session==0),by="eid"))$Age_OFAMS10-
+  (merge(long, df%>%filter(session==0),by="eid"))$age.x+
+  (merge(long, df%>%filter(session==0),by="eid"))$DiseaseDuration)
+paste("Disease duration at follow up is Mean = ",round(mean(na.omit(dd)),1),"±",round(sd(na.omit(dd)),1),sep="")
 # 2. Analyse ------------------------------------------------- 
 # 2.1 Mixed linear models ------------------------------------ 
 # 2.1.1 PASAT

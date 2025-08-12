@@ -29,7 +29,6 @@ df = df %>% select(eid, session, sex, age, lesion_count, EstimatedTotalIntraCran
 d$eid = d$Patnr
 #sum_T1_lesions = d %>% select(eid, MRI_T1Gd_sum)
 
-
 #
 # PASAT in long format
 PASAT = d %>% select(eid, Treatment_OFAMS, BL_PASATcorrect,M12_PASATcorrect,M24_PASATcorrect, smoking_OFAMS)
@@ -103,9 +102,14 @@ df = merge(ALA,df,by=c("eid","session"),all=T)
 df = merge(T1Gd,df,by=c("eid","session"),all=T)
 # here is what the filtered version looks like
 df %>% filter(session == 0 |session == 12 |session == 24)
+df = merge(df,data.frame(eid = c(replicate(3,demo$Patnr)), 
+                         session = c(replicate(nrow(demo),0),replicate(nrow(demo),12),replicate(nrow(demo),24)),
+           DiseaseDuration = c(demo$DISEASE_DURATION, demo$DISEASE_DURATION+1,demo$DISEASE_DURATION+2)),
+      by=c("eid","session"),all=T)
 
 # further merge with new relapse
 rel = merge(relapse,df,by=c("eid","session"),all=T)
+
 
 # ---------------------- #
 # SAVE DATA
